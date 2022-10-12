@@ -1,0 +1,7 @@
+# Python temp files
+__pycache__/
+*.py[cod]
+*$py.class
+# VS Code configs
+.devcontainer
+.vscode
