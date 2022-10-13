@@ -11,17 +11,15 @@ class Application:
         x = image.img_to_array(img)
         x = np.expand_dims(x, axis=0)
         x = self.preprocess_input(x)
-
         preds = self.model.predict(x)
         return self.decode_predictions(preds, top=n_predictions)[0]
 
-    def predict_from_bytes(self, uploaded_file, n_predictions):
+    def predict_from_uploaded_file(self, uploaded_file, n_predictions):
         img = Image.open(uploaded_file.file)
         img = img.resize((224,224))
         x = np.asarray(img)
-        x = np.expand_dims(x, axis=0)
         img.close()
+        x = np.expand_dims(x, axis=0)
         x = self.preprocess_input(x)
-        
         preds = self.model.predict(x)
         return self.decode_predictions(preds, top=n_predictions)[0]

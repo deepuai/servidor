@@ -9,11 +9,9 @@ def convert_floats(predictions):
         )
 
 def evaluate_model(model_name, image):
+    # aqui entra o código que carrega 0 arquivo .h5 de uma rede com base em seu nome
     model = ResNet()
-    predictions = model.predict_from_bytes(uploaded_file=image, n_predictions=3)
-    # img_name = 'capivara.jpg'
-    # resize_img_if_needs(img_name=img_name, size=(224,224))
-    #predictions = model.predict_from_path(img_name=img_name, n_predictions=3)
+    predictions = model.predict_from_uploaded_file(uploaded_file=image, n_predictions=3)
     convert_floats(predictions)
     return {
         "message": "Hello World",
