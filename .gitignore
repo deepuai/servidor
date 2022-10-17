@@ -5,3 +5,4 @@ __pycache__/
 # VS Code configs
 .devcontainer
 .vscode
+models/

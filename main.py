@@ -1,5 +1,8 @@
+from mimetypes import init
 from fastapi import FastAPI, File, UploadFile
-from utils.evaluate_model import evaluate_model
+from fastapi.staticfiles import StaticFiles
+from utils.eval import eval_resnet50
+from utils.init_base import init_base
 from fastapi.middleware.cors import CORSMiddleware
 # import firebase_admin
 # from firebase_admin import credentials
@@ -12,11 +15,16 @@ from fastapi.middleware.cors import CORSMiddleware
 # # for more details.
 
 app = FastAPI()
+app.mount("/models", StaticFiles(directory="models"), name="models")
 app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["*"])
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
-@app.post("/{model_name}/eval")
-async def evaluate(model_name, img_file: UploadFile = File(...)):
-    return evaluate_model(model_name, img_file)
+@app.post("/resnet50/{weights_name}/eval")
+async def eval_endpoint(weights_name, img_file: UploadFile = File(...)):
+    return eval_resnet50(weights_name, img_file)
+
+@app.get('/init')
+async def init_base_endpoint():
+    return {"mensagem": init_base()}
