@@ -7,7 +7,6 @@ def convert_floats(predictions):
     for i in range(len(predictions)):
         predictions[i] = (
             predictions[i][0],predictions[i][1],
-            float(predictions[i][2])
         )
 
 def eval_resnet50(weights_name, image):
@@ -18,4 +17,5 @@ def eval_resnet50(weights_name, image):
     return {
         "message": "Eis a avaliação da rede:",
         "model_name":weights_name,
-        "predictions":predictions}
+        "predictions":predictions,
+        "metrics":model.metrics}

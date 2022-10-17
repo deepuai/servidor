@@ -1,5 +1,5 @@
 from applications.Application import Application
-from keras.models import load_model
+from keras.models import load_model, Model
 from tensorflow.keras.applications.resnet50 import ResNet50
 from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
 

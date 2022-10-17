@@ -3,6 +3,7 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from utils.eval import eval_resnet50
 from utils.init_base import init_base
+from utils.applications import applications
 from fastapi.middleware.cors import CORSMiddleware
 # import firebase_admin
 # from firebase_admin import credentials
@@ -24,6 +25,10 @@ async def root():
 @app.post("/resnet50/{weights_name}/eval")
 async def eval_endpoint(weights_name, img_file: UploadFile = File(...)):
     return eval_resnet50(weights_name, img_file)
+
+@app.get("/applications/{model_name}")
+async def applications_endpoint(model_name):
+    return applications(model_name)
 
 @app.get('/init')
 async def init_base_endpoint():
