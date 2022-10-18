@@ -1,8 +1,8 @@
 from statistics import mode
 import numpy as np
-from applications.ResNet import ResNet50UAI
+from src.applications.ResNet import ResNet50UAI
 from keras.models import load_model
-from utils.preprocessing import resize_img_if_needs
+from src.utils.preprocessing import resize_img_if_needs
 def convert_floats(predictions):
     for i in range(len(predictions)):
         predictions[i] = (
@@ -17,5 +17,5 @@ def eval_resnet50(weights_name, image):
     return {
         "message": "Eis a avaliação da rede:",
         "model_name":weights_name,
-        "predictions":predictions,
-        "metrics":model.metrics}
+        "predictions":predictions
+    }

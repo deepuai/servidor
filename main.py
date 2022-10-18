@@ -1,10 +1,10 @@
-from mimetypes import init
-from fastapi import FastAPI, File, UploadFile
+from src.db.mongodb import DatabaseClient
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from utils.eval import eval_resnet50
-from utils.init_base import init_base
-from utils.applications import applications
 from fastapi.middleware.cors import CORSMiddleware
+from os.path import join
+from src.routers import init
+from src.routers import applications
 # import firebase_admin
 # from firebase_admin import credentials
 # from firebase_admin import storage
@@ -15,21 +15,13 @@ from fastapi.middleware.cors import CORSMiddleware
 # # See https://googlecloudplatform.github.io/google-cloud-python/latest/storage/buckets.html
 # # for more details.
 
+DatabaseClient.initialize('deepuai')
 app = FastAPI()
-app.mount("/models", StaticFiles(directory="models"), name="models")
-app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_methods=["*"])
+app.mount('/models', StaticFiles(directory=join('assets','models')))
+app.add_middleware(CORSMiddleware,allow_origins=['*'],allow_methods=['*'])
+app.include_router(init.router)
+app.include_router(applications.router)
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-@app.post("/resnet50/{weights_name}/eval")
-async def eval_endpoint(weights_name, img_file: UploadFile = File(...)):
-    return eval_resnet50(weights_name, img_file)
-
-@app.get("/applications/{model_name}")
-async def applications_endpoint(model_name):
-    return applications(model_name)
-
-@app.get('/init')
-async def init_base_endpoint():
-    return {"mensagem": init_base()}

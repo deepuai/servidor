@@ -3,3 +3,4 @@ tensorflow
 pillow
 fastapi
 firebase_admin
+pymongo
