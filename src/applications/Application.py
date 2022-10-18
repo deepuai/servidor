@@ -1,12 +1,9 @@
 import numpy as np
-import os
 from PIL import Image
 from keras.api._v2.keras.preprocessing import image
-from constants import IMG_DIR
 
 class Application:
-    def predict_from_path(self, img_name, n_predictions):
-        img_path = os.path.join(IMG_DIR, img_name)
+    def predict_from_path(self, img_path, n_predictions):
         img = image.load_img(img_path, target_size=(224, 224))
         x = image.img_to_array(img)
         x = np.expand_dims(x, axis=0)
