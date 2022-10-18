@@ -14,3 +14,14 @@ def insert(application):
 
 def remove(query):
     return DatabaseClient.delete(COLLECTION, query)
+
+def list_dataset_imagens(application, datasetName):
+    query = {
+        'name': application,
+        'datasetName': datasetName
+    }
+    filter = { 
+        '_id': 0,
+        'datasetImagens': 1
+    }
+    return DatabaseClient.find_one(COLLECTION, query, filter)

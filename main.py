@@ -3,8 +3,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from os.path import join
-from src.routers import init
-from src.routers import applications
+from src.routers import init, applications, datasets
 # import firebase_admin
 # from firebase_admin import credentials
 # from firebase_admin import storage
@@ -21,6 +20,7 @@ app.mount('/models', StaticFiles(directory=join('assets','models')))
 app.add_middleware(CORSMiddleware,allow_origins=['*'],allow_methods=['*'])
 app.include_router(init.router)
 app.include_router(applications.router)
+app.include_router(datasets.router)
 
 @app.get("/")
 async def root():

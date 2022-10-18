@@ -27,8 +27,11 @@ class DatabaseClient:
         return DatabaseClient.__database[collection].find(query)
 
     @staticmethod
-    def find_one(collection, query={}):
-        return DatabaseClient.__database[collection].find_one(query)
+    def find_one(collection, query={}, filter=None):
+        if filter == None:
+            return DatabaseClient.__database[collection].find_one(query)
+        else:
+            return DatabaseClient.__database[collection].find_one(query, filter)
 
     @staticmethod
     def delete(collection, query):
