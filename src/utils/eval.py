@@ -3,10 +3,13 @@ import numpy as np
 from src.applications.ResNet import ResNet50UAI
 from keras.models import load_model
 from src.utils.preprocessing import resize_img_if_needs
+
 def convert_floats(predictions):
     for i in range(len(predictions)):
         predictions[i] = (
-            predictions[i][0],predictions[i][1],
+            predictions[i][0],
+            predictions[i][1],
+            float(predictions[i][2])
         )
 
 def eval_resnet50(weights_name, image):
