@@ -9,10 +9,11 @@ def initialize_bd():
         model = ResNet50(weights_name)
         model.save(join('assets','models','resnet50',weights_name))
         resnet_application = {
-            'name': 'ResNet50-imagenet',
+            'name': 'ResNet50',
             'version': 'ImageNet',
             'applicationAccuracy': 92.1,
             'applicationNumberOfAccesses': 5,
+            'datasetName': 'ImageNet',
             'datasetSize': 21000,
             'datasetNumberOfImgs': 1024,
             'datasetNumberOfClasses': 28,

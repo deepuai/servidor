@@ -9,7 +9,7 @@ def convert_floats(predictions):
         predictions[i] = (
             predictions[i][0],
             predictions[i][1],
-            float(predictions[i][2])
+            round(float(predictions[i][2]), 4)
         )
 
 def eval_resnet50(weights_name, image):

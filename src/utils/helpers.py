@@ -5,6 +5,7 @@ def application_helper(application) -> dict:
         'version': application['version'],
         'applicationAccuracy': application['applicationAccuracy'],
         'applicationNumberOfAccesses': application['applicationNumberOfAccesses'],
+        'datasetName': application['datasetName'],
         'datasetSize': application['datasetSize'], 
         'datasetNumberOfImgs': application['datasetNumberOfImgs'],
         'datasetNumberOfClasses': application['datasetNumberOfClasses'],
