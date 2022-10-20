@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+    mongodb:
+        container_name: "mongo"
+        image: mongo:4.0.4
+        restart: always
+        ports:
+            - '27017:27017'
+        volumes:
+          - database:/data/db
+    rabbitmq3:
+        container_name: "rabbitmq"
+        image: rabbitmq:3.8-management-alpine
+        restart: always
+        ports:
+            - '5672:5672'
+            - '15672:15672'
+        environment:
+            - RABBITMQ_DEFAULT_USER=deepuai
+            - RABBITMQ_DEFAULT_PASS=deepuai
+volumes:
+  database:
