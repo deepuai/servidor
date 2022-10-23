@@ -2,6 +2,7 @@ numpy
 tensorflow
 pillow
 fastapi
+aiofiles 
 firebase_admin
 pymongo
 pika

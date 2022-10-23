@@ -1,21 +1,33 @@
 import os
-import tempfile
 import zipfile
+import aiofiles
+from os.path import join, basename, split
 from PIL import Image
 
-def extract_zip(zip_file, output_dir):
+CHUNK_SIZE = 1024 * 1024
+
+async def save_uploaded_zip(zip_file, path):
     try:
-        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temp_dir:
-            os.chdir(temp_dir)
-            os.mkdir('input')
+        print('Saving uploaded file...')
+        os.makedirs(path, exist_ok=True)
+        full_path = join(path, basename(zip_file.filename))
+        async with aiofiles.open(full_path, 'wb') as file:
+            while chunk := await zip_file.read(CHUNK_SIZE):
+                await file.write(chunk)
+    except Exception as e:
+        raise e
+    finally:
+        await zip_file.close()
+        print('Upload file was saved successfully!')
+        return full_path
 
-            with open("input/zip_file.zip", 'wb') as new_file:
-                new_file.write(zip_file.file._file.getvalue())
-
-                with zipfile.ZipFile("input/zip_file.zip") as zip_file:
-                    for zip_info in zip_file.infolist():
-                        zip_info.filename = zip_info.filename.split('/')[1]
-                        zip_file.extract(zip_info, output_dir)
+def extract_zip(zip_path):
+    print('Extracting zip file...')
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_file:
+            zip_file.extractall(split(zip_path)[0])
+        print('Zip file extracted successfully!')
+        os.remove(zip_path)
     except Exception as e:
         print(e)
 
