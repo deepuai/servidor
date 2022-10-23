@@ -1,7 +1,7 @@
 import os
 import zipfile
 import aiofiles
-from os.path import join, basename, split
+from os.path import join, basename, split, exists
 from PIL import Image
 
 CHUNK_SIZE = 1024 * 1024
@@ -24,10 +24,13 @@ async def save_uploaded_zip(zip_file, path):
 def extract_zip(zip_path):
     print('Extracting zip file...')
     try:
-        with zipfile.ZipFile(zip_path, 'r') as zip_file:
-            zip_file.extractall(split(zip_path)[0])
-        print('Zip file extracted successfully!')
-        os.remove(zip_path)
+        head_path = split(zip_path)[0]
+        if (exists(zip_path)):
+            with zipfile.ZipFile(zip_path, 'r') as zip_file:
+                zip_file.extractall(head_path)
+            os.remove(zip_path)
+            print('Zip file extracted successfully!')
+        return zip_path.split('.zip')[0]
     except Exception as e:
         print(e)
 
