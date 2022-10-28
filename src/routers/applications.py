@@ -11,7 +11,3 @@ async def eval_endpoint(model_name: str = 'resnet50', weights_name: str = 'image
 @router.post("/{model_name}/{weights_name}/fit")
 async def fit_endpoint(model_name: str = 'resnet50', weights_name: str = 'imagenet', zip_file: UploadFile = File(...)):
     return await applications_controller.fit(model_name, weights_name, zip_file)
-
-@router.get("/applications")
-async def list_applications():
-    return applications_controller.list_all()
