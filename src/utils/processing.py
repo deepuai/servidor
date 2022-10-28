@@ -1,7 +1,11 @@
+import os
+import json
 import tensorflow as tf
+from constants import ROOT_DIR
 from src.utils.helpers import convert_predictions_to_float
 from src.utils.preprocessing import preprocess_dataset_from_directory
 from src.utils.tools import extract_zip
+from src.db.postgres import DatabaseClient
 from src.applications.ResNet import ResNet50UAI
 from tensorflow.keras.models import Sequential
 from tensorflow.python.keras.layers import Dense, Flatten
@@ -9,7 +13,7 @@ from tensorflow.keras.optimizers import Adam
 
 def eval(model_name, weights_name, image):
     model = ResNet50UAI(weights_name)
-    predictions = model.predict_from_uploaded_file(uploaded_file=image, n_predictions=3)
+    predictions = model.predict_from_uploaded_file(uploaded_file=image, n_predictions=3, weights_name=weights_name)
     convert_predictions_to_float(predictions)
     return {
         "message": "Eis a avaliação da rede:",
@@ -27,12 +31,13 @@ def create_sequencial_model(pretrained_model, number_of_classes):
     return model
 
 def fit(message):
+    print(message)
     dataset_path = extract_zip(message['dir'])
-    dataset = preprocess_dataset_from_directory(dir=dataset_path, img_size=(256,256))
+    dataset = preprocess_dataset_from_directory(dir=dataset_path, img_size=(224,224))
 
     pretrained_model= tf.keras.applications.ResNet50(
         include_top=False,
-        input_shape=(256,256,3),
+        input_shape=(224,224,3),
         pooling='avg',
         classes=dataset['number_of_classes'],
         weights='imagenet')
@@ -42,15 +47,31 @@ def fit(message):
     model = create_sequencial_model(pretrained_model, dataset['number_of_classes'])
     model.compile(optimizer=Adam(lr=0.001),loss='sparse_categorical_crossentropy',metrics=['accuracy'])
     
-    epochs=1
-    application = model.fit(
+    epochs=2
+    applicationHistory = model.fit(
         dataset['training'],
         validation_data=dataset['validation'],
         epochs=epochs
     )
-    print(application.history['accuracy'])
-    print(application.history['val_accuracy'])
+    print(applicationHistory.history['accuracy'])
+    print(applicationHistory.history['val_accuracy'])
+
+    name = message['deepuai_app']
+    version = message['version']
+    accuracy = applicationHistory.history['val_accuracy'][1]
+    app_classes = json.dumps(dataset['classes'])
+    parent_id = message['parent_id']
+
+    DatabaseClient.initialize('deepuai')
+    table = 'applications'
+    fields = 'name, version, accuracy, n_accesses, classes, parent_id, model_id, dataset_id'
+    values = f"'{name}', '{version}', {accuracy}, 0, '{app_classes}', {parent_id}, 1, 1"
+    sql_command = f'INSERT INTO {table} ({fields}) VALUES ({values})'
+    print(sql_command)
+    DatabaseClient.execute(sql_command)
+    DatabaseClient.close(DatabaseClient)
     
+    model.save(os.path.join(ROOT_DIR, 'assets','models','resnet50',version))
     return {
         "message": "Sucesso!"
     }

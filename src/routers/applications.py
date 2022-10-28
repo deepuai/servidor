@@ -12,8 +12,9 @@ async def eval_endpoint(model_name: str = 'resnet50', weights_name: str = 'image
 async def fit_endpoint(
     model_name: str = 'resnet50',
     weights_name: str = 'imagenet',
+    parent_id: int = Form(),
     deepuai_app: str = Form(),
     version: str = Form(),
     zip_file: UploadFile = File(...)
     ):
-    return await applications_controller.fit(model_name, weights_name, deepuai_app, version, zip_file)
+    return await applications_controller.fit(model_name, weights_name, parent_id, deepuai_app, version, zip_file)
