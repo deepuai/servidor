@@ -19,9 +19,8 @@ class Application:
         x = np.asarray(img)
         img.close()
         x = np.expand_dims(x, axis=0)
+        preds = self.model.predict(x)
         if weights_name in BASE_WEIGHTS:
-            x = self.preprocess_input(x)
-            preds = self.model.predict(x)
             return self.decode_predictions(preds, top=n_predictions)[0]
         else:
             preds = self.model.predict(x)

@@ -21,4 +21,5 @@ def decode_predictions(predictions, version, n_predictions):
     classes = classes[0][0]
     predictions = predictions[0]
     response = [[id, classes[id], predictions[id]] for id in range(0, len(classes))]
+    response.sort(key=lambda elem: elem[2], reverse=True)
     return response[0:n_predictions]

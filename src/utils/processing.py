@@ -1,14 +1,13 @@
 import os
 import json
-import tensorflow as tf
 from constants import ROOT_DIR
 from src.utils.helpers import convert_predictions_to_float
 from src.utils.preprocessing import preprocess_dataset_from_directory
 from src.utils.tools import extract_zip
 from src.db.postgres import DatabaseClient
 from src.applications.ResNet import ResNet50UAI
-from tensorflow.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Flatten
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.optimizers import Adam
 
 def eval(model_name, weights_name, image):
@@ -35,12 +34,8 @@ def fit(message):
     dataset_path = extract_zip(message['dir'])
     dataset = preprocess_dataset_from_directory(dir=dataset_path, img_size=(224,224))
 
-    pretrained_model= tf.keras.applications.ResNet50(
-        include_top=False,
-        input_shape=(224,224,3),
-        pooling='avg',
-        classes=dataset['number_of_classes'],
-        weights='imagenet')
+    application = ResNet50UAI(message['weights'])
+    pretrained_model = Model(application.model.input, application.model.layers[-2].output)
     for layer in pretrained_model.layers:
         layer.trainable=False
 
