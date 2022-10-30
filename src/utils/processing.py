@@ -5,14 +5,18 @@ from src.utils.helpers import convert_predictions_to_float
 from src.utils.preprocessing import preprocess_dataset_from_directory
 from src.utils.tools import extract_zip
 from src.db.postgres import DatabaseClient
-from src.applications.ResNet import ResNet50UAI
+from src.applications.Application import Application
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.optimizers import Adam
 
 def eval(model_name, weights_name, image):
-    model = ResNet50UAI(weights_name)
-    predictions = model.predict_from_uploaded_file(uploaded_file=image, n_predictions=3, weights_name=weights_name)
+    application = Application(model_name, weights_name)
+    predictions = application.predict_from_uploaded_file(
+        uploaded_file=image,
+        n_predictions=3,
+        model_name=model_name,
+        weights_name=weights_name)
     convert_predictions_to_float(predictions)
     return {
         "message": "Eis a avaliação da rede:",
@@ -34,7 +38,7 @@ def fit(message):
     dataset_path = extract_zip(message['dir'])
     dataset = preprocess_dataset_from_directory(dir=dataset_path, img_size=(224,224))
 
-    application = ResNet50UAI(message['weights'])
+    application = Application(message['model'], message['weights'])
     pretrained_model = Model(application.model.input, application.model.layers[-2].output)
     for layer in pretrained_model.layers:
         layer.trainable=False

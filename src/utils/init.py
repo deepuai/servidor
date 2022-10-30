@@ -1,12 +1,10 @@
 from os.path import join
-
-from src.applications.ResNet import ResNet50UAI
+from tensorflow.keras.applications.resnet50 import ResNet50
 
 def initialize_models():
     try:
-        weights_name = 'imagenet'
-        application = ResNet50UAI(weights_name, input_shape=(224,224,3))
-        application.model.save(join('assets','models','resnet50',weights_name))
+        resnet50 = ResNet50(weights='imagenet', input_shape=(224,224,3))
+        resnet50.save(join('assets','models','resnet50','imagenet'))
         return("Sucesso!")
     except Exception as e:
         return(e)
