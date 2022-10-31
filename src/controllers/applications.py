@@ -7,13 +7,14 @@ from src.rabbitmq.producer import send_message_to_queue
 
 TABLE = 'applications'
 
-async def fit(model_name, weights_name, parent_id, deepuai_app, version, zip_file):
+async def fit(model_name, weights_name, parent_id, deepuai_app, version, model_id, zip_file):
     path = join(ROOT_DIR, 'assets', 'dataset', model_name, version)
     dataset_path = await save_uploaded_zip(zip_file, path)
     
     message = {
         'parent_id': parent_id,
         'model': model_name,
+        'model_id': model_id,
         'weights': weights_name,
         'deepuai_app': deepuai_app,
         'version': version,

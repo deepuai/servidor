@@ -15,6 +15,7 @@ async def fit_endpoint(
     parent_id: int = Form(),
     deepuai_app: str = Form(),
     version: str = Form(),
+    model_id: int = Form(),
     zip_file: UploadFile = File(...)
     ):
-    return await applications_controller.fit(model_name, weights_name, parent_id, deepuai_app, version, zip_file)
+    return await applications_controller.fit(model_name, weights_name, parent_id, deepuai_app, version, model_id, zip_file)
