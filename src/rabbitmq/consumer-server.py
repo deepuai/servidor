@@ -3,8 +3,11 @@ import pika, sys, os
 sys.path.append('../..')
 import src.utils.processing as processing
 
-def callback(ch, method, properties, body):
+def message_process(channel, method, properties, body):
+    print('\n**********************************************')
     processing.fit(json.loads(body))
+    channel.basic_ack(delivery_tag=method.delivery_tag)
+    print('******** Finishing message processing ********')
 
 def keep_consumer_opened():
     credencials = pika.PlainCredentials('deepuai', 'deepuai')
@@ -12,7 +15,8 @@ def keep_consumer_opened():
     queue_name = 'fit'
     channel = connection.channel()
     channel.queue_declare(queue=queue_name)
-    channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(queue=queue_name, on_message_callback=message_process)
     channel.start_consuming()
 
 if __name__ == '__main__':

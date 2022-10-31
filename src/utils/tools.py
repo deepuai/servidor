@@ -22,14 +22,14 @@ async def save_uploaded_zip(zip_file, path):
         return full_path
 
 def extract_zip(zip_path):
-    print('Extracting zip file...')
+    print('\n******** Extracting zip file... ********')
     try:
         head_path = split(zip_path)[0]
         if (exists(zip_path)):
             with zipfile.ZipFile(zip_path, 'r') as zip_file:
                 zip_file.extractall(head_path)
             os.remove(zip_path)
-            print('Zip file extracted successfully!')
+            print('******** Zip file extracted successfully! ********')
         return zip_path.split('.zip')[0]
     except Exception as e:
         print(e)

@@ -35,46 +35,52 @@ def create_sequencial_model(pretrained_model, number_of_classes):
     return model
 
 def fit(message):
-    print(message)
-    dataset_path = extract_zip(message['dir'])
-    dataset = preprocess_dataset_from_directory(
-        dir=dataset_path,
-        img_size=get_input_size_or_shape(model=message['model'], shape=False))
+    try:
+        print("******** START FIT PROCESS ******** \n")
+        print(f'Message: \n{message}')
+        dataset_path = extract_zip(message['dir'])
+        dataset = preprocess_dataset_from_directory(
+            dir=dataset_path,
+            img_size=get_input_size_or_shape(model=message['model'], shape=False))
 
-    application = Application(message['model'], message['weights'])
-    pretrained_model = Model(application.model.input, application.model.layers[-2].output)
-    for layer in pretrained_model.layers:
-        layer.trainable=False
+        print("\n******** Instantiating selected keras model ********")
+        application = Application(message['model'], message['weights'])
+        pretrained_model = Model(application.model.input, application.model.layers[-2].output)
+        for layer in pretrained_model.layers:
+            layer.trainable=False
 
-    model = create_sequencial_model(pretrained_model, dataset['number_of_classes'])
-    model.compile(optimizer=Adam(lr=0.001),loss='sparse_categorical_crossentropy',metrics=['accuracy'])
-    
-    epochs=2
-    applicationHistory = model.fit(
-        dataset['training'],
-        validation_data=dataset['validation'],
-        epochs=epochs
-    )
-    print(applicationHistory.history['accuracy'])
-    print(applicationHistory.history['val_accuracy'])
+        print("\n******** Creating sequencial model for transfer learning ********")
+        model = create_sequencial_model(pretrained_model, dataset['number_of_classes'])
+        model.compile(optimizer=Adam(lr=0.001),loss='sparse_categorical_crossentropy',metrics=['accuracy'])
+        
+        print("\n******** Initializing fit ********")
+        epochs=5
+        applicationHistory = model.fit(
+            dataset['training'],
+            validation_data=dataset['validation'],
+            epochs=epochs
+        )
+        print("******** Fit finished ********")
 
-    name = message['deepuai_app']
-    version = message['version']
-    accuracy = applicationHistory.history['val_accuracy'][1]
-    app_classes = json.dumps(dataset['classes'])
-    parent_id = message['parent_id']
-    model_id = message['model_id']
+        name = message['deepuai_app']
+        version = message['version']
+        accuracy = applicationHistory.history['val_accuracy'][-1]
+        app_classes = json.dumps(dataset['classes'])
+        parent_id = message['parent_id']
+        model_id = message['model_id']
 
-    DatabaseClient.initialize('deepuai')
-    table = 'applications'
-    fields = 'name, version, accuracy, n_accesses, classes, parent_id, model_id, dataset_id'
-    values = f"'{name}', '{version}', {accuracy}, 0, '{app_classes}', {parent_id}, {model_id}, 1"
-    sql_command = f'INSERT INTO {table} ({fields}) VALUES ({values})'
-    print(sql_command)
-    DatabaseClient.execute(sql_command)
-    DatabaseClient.close(DatabaseClient)
-    
-    model.save(os.path.join(ROOT_DIR, 'assets','models',message['model'],version))
-    return {
-        "message": "Sucesso!"
-    }
+        print("\n******** Saving new application into database ********")
+        DatabaseClient.initialize('deepuai')
+        table = 'applications'
+        fields = 'name, version, accuracy, n_accesses, classes, parent_id, model_id, dataset_id'
+        values = f"'{name}', '{version}', {accuracy}, 0, '{app_classes}', {parent_id}, {model_id}, 1"
+        sql_command = f'INSERT INTO {table} ({fields}) VALUES ({values})'
+        print(sql_command)
+        DatabaseClient.execute(sql_command)
+        DatabaseClient.close(DatabaseClient)
+        
+        print("\n******** Saving new application as keras model ********")
+        model.save(os.path.join(ROOT_DIR, 'assets','models',message['model'],version))
+        print("******** Application was saved ********")
+    except Exception as e:
+        print(f'Error: {e}')

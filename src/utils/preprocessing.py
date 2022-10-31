@@ -11,7 +11,7 @@ def resize_img_if_needs(img_name, size):
         image.save(img_path)
 
 def preprocess_dataset_from_directory(dir, validation_spli=0.2, seed=42, img_size=(256, 256), batch_size=32):
-    print('Preprocessing the training subset...')
+    print('\n******** Preprocessing the training subset... ********')
     training_dataset = tf.keras.preprocessing.image_dataset_from_directory(
         directory=dir,
         validation_split=validation_spli,
@@ -19,7 +19,7 @@ def preprocess_dataset_from_directory(dir, validation_spli=0.2, seed=42, img_siz
         seed=seed,
         image_size=img_size,
         batch_size=batch_size)
-    print('Preprocessing the validation subset...')
+    print('\n******** Preprocessing the validation subset... ********')
     validation_dataset = tf.keras.preprocessing.image_dataset_from_directory(
         directory=dir,
         validation_split=validation_spli,
