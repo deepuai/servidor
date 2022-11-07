@@ -3,7 +3,8 @@ import zipfile
 import aiofiles
 from os.path import join, basename, split, exists
 from PIL import Image
-
+from constants import BASE_URL, DATASETS_URL, ROOT_DIR
+from src.db.postgres import DatabaseClient
 CHUNK_SIZE = 1024 * 1024
 
 async def save_uploaded_zip(zip_file, path):
@@ -46,3 +47,35 @@ def load_unziped_dataset(dir):
         return ( files, labels )
     except Exception as e:
         print(e)
+
+def get_image_url(image_path):
+    path = image_path
+    image_endpoint = ''
+    while(split(path)[1] != 'dataset'):
+        path_tuple = split(path)
+        path = path_tuple[0]
+        image_endpoint = f'/{path_tuple[1]}' + image_endpoint
+    return BASE_URL + DATASETS_URL + image_endpoint
+
+def get_dataset_db_path(dataset_db_id):
+    print("\n******** Fetching dataset infos from db ********")
+    DatabaseClient.initialize('deepuai')
+    table = 'datasets'
+    fields = 'name, n_classes'
+    sql_command = f'SELECT {fields} FROM {table} WHERE id={dataset_db_id}'
+    sql_response = DatabaseClient.fetch(sql_command)
+    DatabaseClient.close(DatabaseClient)
+    dataset = sql_response[0]
+    dataset_dir = join(ROOT_DIR, 'assets', 'dataset', dataset[0])
+    return dataset_dir
+
+def get_model_db_name(model_db_id):
+    print("\n******** Fetching model infos from db ********")
+    DatabaseClient.initialize('deepuai')
+    table = 'models'
+    fields = 'name'
+    sql_command = f'SELECT {fields} FROM {table} WHERE id={model_db_id}'
+    sql_response = DatabaseClient.fetch(sql_command)
+    DatabaseClient.close(DatabaseClient)
+    model_name = sql_response[0][0].lower()
+    return model_name

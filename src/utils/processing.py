@@ -1,9 +1,10 @@
 import os
 import json
+from os.path import join
 from constants import ROOT_DIR
 from src.utils.helpers import convert_predictions_to_float, get_input_size_or_shape
 from src.utils.preprocessing import preprocess_dataset_from_directory
-from src.utils.tools import extract_zip
+from src.utils.tools import extract_zip, get_dataset_db_path
 from src.db.postgres import DatabaseClient
 from src.applications.Application import Application
 from tensorflow.keras.models import Sequential, Model
@@ -38,16 +39,20 @@ def fit(message):
     try:
         print("******** START FIT PROCESS ******** \n")
         print(f'Message: \n{message}')
-        dataset_path = extract_zip(message['dir'])
+        if message.get('dataset_id', False):
+            dataset_path = get_dataset_db_path(message['dataset_id'])
+        else:
+            dataset_path = extract_zip(message['dir'])
         dataset = preprocess_dataset_from_directory(
             dir=dataset_path,
             img_size=get_input_size_or_shape(model=message['model'], shape=False))
-
+        print(f'Dataset: {dataset}')
         print("\n******** Instantiating selected keras model ********")
-        application = Application(message['model'], message['weights'])
+        application = Application(message['model'], message.get('weights','random'))
         pretrained_model = Model(application.model.input, application.model.layers[-2].output)
-        for layer in pretrained_model.layers:
-            layer.trainable=False
+        if message.get('weights', False):
+            for layer in pretrained_model.layers:
+                layer.trainable=False
 
         print("\n******** Creating sequencial model for transfer learning ********")
         model = create_sequencial_model(pretrained_model, dataset['number_of_classes'])

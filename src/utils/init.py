@@ -14,6 +14,14 @@ def initialize_models():
             weights='imagenet',
             input_shape=get_input_size_or_shape(model='xception', shape=True))
         xception.save(join('assets','models','xception','imagenet'))
+
+        resnet50 = tf.keras.applications.resnet50.ResNet50(
+            input_shape=get_input_size_or_shape(model='resnet50', shape=True))
+        resnet50.save(join('assets','models','resnet50','random'))
+
+        xception = tf.keras.applications.xception.Xception(
+            input_shape=get_input_size_or_shape(model='xception', shape=True))
+        xception.save(join('assets','models','xception','random'))
         
         return("Sucesso!")
     except Exception as e:

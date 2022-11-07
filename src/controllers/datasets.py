@@ -3,18 +3,9 @@ from os.path import join, split, getsize
 from os import listdir, walk
 from constants import ROOT_DIR, BASE_URL, DATASETS_URL
 from src.db.postgres import DatabaseClient
-from src.utils.tools import save_uploaded_zip, extract_zip
+from src.utils.tools import save_uploaded_zip, extract_zip, get_image_url
 
 TABLE = 'datasets'
-def get_image_url(image_path):
-    path = image_path
-    image_endpoint = ''
-    while(split(path)[1] != 'dataset'):
-        path_tuple = split(path)
-        path = path_tuple[0]
-        image_endpoint = f'/{path_tuple[1]}' + image_endpoint
-    return BASE_URL + DATASETS_URL + image_endpoint
-
 async def save(zip_file):
     path = join(ROOT_DIR, 'assets', 'dataset')
     dataset_path = await save_uploaded_zip(zip_file, path)
