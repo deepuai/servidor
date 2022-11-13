@@ -41,5 +41,21 @@ class DatabaseClient:
         return response
 
     @staticmethod
+    def insert_into(table, fields, values):
+        sql_command = f'INSERT INTO {table} ({fields}) VALUES ({values})'
+        print(sql_command)
+        DatabaseClient.execute(sql_command)
+
+    @staticmethod
+    def select_from(table, fields='*', where=False):
+        __where = ''
+        if where is not False:
+            __where = f'WHERE {where}'
+        sql_command = f'SELECT {fields} FROM {table} {__where}'
+        print(sql_command)
+        result = DatabaseClient.fetch(sql_command)
+        return result
+
+    @staticmethod
     def close(DatabaseClient):
         DatabaseClient.__database.close()

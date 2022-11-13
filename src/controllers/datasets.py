@@ -12,7 +12,7 @@ async def save(zip_file):
     dataset_path = extract_zip(dataset_path)
 
     dataset_name = split(dataset_path)[1]
-    dataset_classes = listdir(join(dataset_path,'train'))
+    dataset_classes = listdir(dataset_path)
     classes_length = len(dataset_classes)
 
     dataset_size = 0
@@ -29,9 +29,9 @@ async def save(zip_file):
 
     # Salvar Dataset no Banco
     DatabaseClient.initialize('deepuai')
-    fields = 'name, size, n_images, n_classes, classes, images'
-    values = f"'{dataset_name}', '{dataset_size}', {images_length}, {classes_length}, '{dataset_classes}', '{images_urls}'"
-    sql_command = f'INSERT INTO {TABLE} ({fields}) VALUES ({values})'
-    DatabaseClient.execute(sql_command)
+    DatabaseClient.insert_into(
+                table=TABLE,
+                fields='name, size, n_images, n_classes, classes, images',
+                values=f"'{dataset_name}', '{dataset_size}', {images_length}, {classes_length}, '{dataset_classes}', '{images_urls}'")
     DatabaseClient.close(DatabaseClient)
     return {"message": "Dataset criado com sucesso!"}
