@@ -11,7 +11,7 @@ def fit_message_process(channel, method, properties, body):
 
 def keep_consumer_opened(queue_name, callback):
     credencials = pika.PlainCredentials('deepuai', 'deepuai')
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', credentials=credencials))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', credentials=credencials, heartbeat=600, blocked_connection_timeout=300))
     channel = connection.channel()
     channel.queue_declare(queue=queue_name)
     channel.basic_qos(prefetch_count=1)
