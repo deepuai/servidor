@@ -47,6 +47,12 @@ class DatabaseClient:
         DatabaseClient.execute(sql_command)
 
     @staticmethod
+    def update(table, values, condition):
+        sql_command = f'UPDATE {table} SET {values} WHERE {condition}'
+        print(sql_command)
+        DatabaseClient.execute(sql_command)
+
+    @staticmethod
     def select_from(table, fields='*', where=False):
         __where = ''
         if where is not False:

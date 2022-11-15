@@ -40,18 +40,37 @@ def fit(message):
     try:
         print("******** START FIT PROCESS ******** \n")
         print(f'Message: \n{message}')
-        if message.get('dataset_id', False):
-            dataset_path = get_dataset_db_path(message['dataset_id'])
+        name = message['deepuai_app']
+        model_name = message['model']
+        weights = message.get('weights','random')
+        version = message['version']
+        dataset_id = message.get('dataset_id', False)
+        
+        print("\n******** Updating application for FITTING status ********")
+        DatabaseClient.initialize('deepuai')
+        application_id = DatabaseClient.select_from(
+                table='applications',
+                fields='id',
+                where=f"name='{name}' AND version='{version}'"
+        )[0][0]
+        DatabaseClient.update(
+            table='applications',
+            values=f"status = 'FITTING'",
+            condition=f"id = {application_id}")
+        DatabaseClient.close(DatabaseClient)
+
+        if dataset_id:
+            dataset_path = get_dataset_db_path(dataset_id)
         else:
             dataset_path = extract_zip(message['dir'])
         dataset = preprocess_dataset_from_directory(
             dir=dataset_path,
-            img_size=get_input_size_or_shape(model=message['model'], shape=False))
-        print(f'Dataset: {dataset}')
+            img_size=get_input_size_or_shape(model=model_name, shape=False))
+
         print("\n******** Instantiating selected keras model ********")
-        application = Application(message['model'], message.get('weights','random'))
+        application = Application(model_name, weights)
         pretrained_model = Model(application.model.input, application.model.layers[-2].output)
-        if message.get('weights', False):
+        if weights is not 'random':
             for layer in pretrained_model.layers:
                 layer.trainable=False
 
@@ -67,17 +86,10 @@ def fit(message):
             epochs=epochs
         )
         print("******** Fit finished ********")
-
-        name = message['deepuai_app']
-        version = message['version']
         accuracy = applicationHistory.history['val_accuracy'][-1]
         classes = json.dumps(dataset['classes'])
-        parent_id = message['parent_id']
-        model_id = message['model_id']
-        dataset_id = message.get('dataset_id', False)
-
+        
         DatabaseClient.initialize('deepuai')
-
         if not dataset_id:
             print("\n******** Saving new dataset into database ********")
             dataset_name = os.path.split(dataset_path)[1]
@@ -102,15 +114,15 @@ def fit(message):
                 where=f"name='{dataset_name}' AND size='{dataset_size}' AND n_images='{n_images}' AND n_classes='{n_classes}'"
             )[0][0]
 
-        print("\n******** Saving new application into database ********")
-        DatabaseClient.insert_into(
-                table='applications',
-                fields='name, version, accuracy, n_accesses, classes, parent_id, model_id, dataset_id',
-                values=f"'{name}', '{version}', {accuracy}, 0, '{classes}', {parent_id}, {model_id}, {dataset_id}")
-        DatabaseClient.close(DatabaseClient)
-        
         print("\n******** Saving new application as keras model ********")
-        model.save(os.path.join(ROOT_DIR, 'assets','models',message['model'],version))
+        model.save(os.path.join(ROOT_DIR, 'assets', 'models', model_name, version))
         print("******** Application was saved ********")
+
+        print("\n******** Updating application into database to FITTED status ********")
+        DatabaseClient.update(
+            table='applications',
+            values=f"status = 'FITTED', accuracy = '{accuracy}', classes = '{classes}', dataset_id = '{dataset_id}'",
+            condition=f"id = {application_id}")
+        DatabaseClient.close(DatabaseClient)
     except Exception as e:
         print(f'Error: {e}')

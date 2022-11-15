@@ -21,7 +21,12 @@ async def fit(model_name, weights_name, parent_id, deepuai_app, version, model_i
         'dir': dataset_path
     }
     send_message_to_queue(queue='fit', message=json.dumps(message))
+    DatabaseClient.insert_into(
+            table=TABLE,
+            fields='name, version, status, parent_id, model_id',
+            values=f"'{deepuai_app}', '{version}', 'WAITING', {parent_id}, {model_id}")
+    DatabaseClient.close(DatabaseClient)
 
     return {
-        "message": "Esse treinamento foi colocado na fila, quando terminar você será avisado!"
+        "message": "Esse treinamento foi colocado na fila. É possível acompanhar o andamento do processo na tela Aplicações > Na fila!"
     }
