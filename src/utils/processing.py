@@ -36,13 +36,39 @@ def create_sequencial_model(pretrained_model, number_of_classes):
     model.add(Dense(number_of_classes, activation='softmax'))
     return model
 
+def persist_dataset_from_zip(dataset_path, n_classes):
+    print("\n******** Saving new dataset into database ********")
+    dataset_name = os.path.split(dataset_path)[1]
+    dataset_size = 0
+    n_images = 0
+    images_urls = []
+    for path, _, files in walk(dataset_path):
+        n_images += len(files)
+        for f in files:
+            fp = join(path, f)
+            dataset_size += getsize(fp)
+            images_urls.append(get_image_url(fp))
+    images_urls = json.dumps(images_urls)
+    DatabaseClient.initialize('deepuai')
+    DatabaseClient.insert_into(
+        table='datasets',
+        fields='name, size, n_images, n_classes, classes, images',
+        values=f"'{dataset_name}', '{dataset_size}', {n_images}, {n_classes}, '{n_classes}', '{images_urls}'")
+    dataset_id = DatabaseClient.select_from(
+        table='datasets',
+        fields='id',
+        where=f"name='{dataset_name}' AND size='{dataset_size}' AND n_images='{n_images}' AND n_classes='{n_classes}'"
+    )[0][0]
+    DatabaseClient.close(DatabaseClient)
+    return dataset_id
+
 def fit(message):
     try:
         print("******** START FIT PROCESS ******** \n")
         print(f'Message: \n{message}')
         name = message['deepuai_app']
         model_name = message['model']
-        weights = message.get('weights','random')
+        weights = message['weights']
         version = message['version']
         dataset_id = message.get('dataset_id', False)
         
@@ -51,8 +77,7 @@ def fit(message):
         application_id = DatabaseClient.select_from(
                 table='applications',
                 fields='id',
-                where=f"name='{name}' AND version='{version}'"
-        )[0][0]
+                where=f"name='{name}' AND version='{version}'")[0][0]
         DatabaseClient.update(
             table='applications',
             values=f"status = 'FITTING'",
@@ -60,65 +85,48 @@ def fit(message):
         DatabaseClient.close(DatabaseClient)
 
         if dataset_id:
+            print("\n******** Getting dataset from database ********")
             dataset_path = get_dataset_db_path(dataset_id)
         else:
+            print("\n******** Extracting uploaded dataset ********")
             dataset_path = extract_zip(message['dir'])
+
         dataset = preprocess_dataset_from_directory(
             dir=dataset_path,
             img_size=get_input_size_or_shape(model=model_name, shape=False))
 
+        if not dataset_id: dataset_id = persist_dataset_from_zip(dataset_path, dataset['number_of_classes'])
+
         print("\n******** Instantiating selected keras model ********")
         application = Application(model_name, weights)
         pretrained_model = Model(application.model.input, application.model.layers[-2].output)
-        if weights is not 'random':
+        if weights != 'random':
+            print("\n******** Creating sequencial model for transfer learning ********")
             for layer in pretrained_model.layers:
                 layer.trainable=False
+        else:
+            print("\n******** Creating sequencial model for complete training ********")
 
-        print("\n******** Creating sequencial model for transfer learning ********")
         model = create_sequencial_model(pretrained_model, dataset['number_of_classes'])
         model.compile(optimizer=Adam(lr=0.001),loss='sparse_categorical_crossentropy',metrics=['accuracy'])
         
-        print("\n******** Initializing fit ********")
+        print("\n******** Initializing fit [5 epochs] ********")
         epochs=5
         applicationHistory = model.fit(
             dataset['training'],
             validation_data=dataset['validation'],
-            epochs=epochs
-        )
+            epochs=epochs)
+
         print("******** Fit finished ********")
         accuracy = applicationHistory.history['val_accuracy'][-1]
         classes = json.dumps(dataset['classes'])
         
-        DatabaseClient.initialize('deepuai')
-        if not dataset_id:
-            print("\n******** Saving new dataset into database ********")
-            dataset_name = os.path.split(dataset_path)[1]
-            dataset_size = 0
-            n_images = 0
-            n_classes = dataset['number_of_classes']
-            images_urls = []
-            for path, _, files in walk(dataset_path):
-                n_images += len(files)
-                for f in files:
-                    fp = join(path, f)
-                    dataset_size += getsize(fp)
-                    images_urls.append(get_image_url(fp))
-            images_urls = json.dumps(images_urls)
-            DatabaseClient.insert_into(
-                table='datasets',
-                fields='name, size, n_images, n_classes, classes, images',
-                values=f"'{dataset_name}', '{dataset_size}', {n_images}, {n_classes}, '{classes}', '{images_urls}'")
-            dataset_id = DatabaseClient.select_from(
-                table='datasets',
-                fields='id',
-                where=f"name='{dataset_name}' AND size='{dataset_size}' AND n_images='{n_images}' AND n_classes='{n_classes}'"
-            )[0][0]
-
         print("\n******** Saving new application as keras model ********")
         model.save(os.path.join(ROOT_DIR, 'assets', 'models', model_name, version))
         print("******** Application was saved ********")
 
         print("\n******** Updating application into database to FITTED status ********")
+        DatabaseClient.initialize('deepuai')
         DatabaseClient.update(
             table='applications',
             values=f"status = 'FITTED', accuracy = '{accuracy}', classes = '{classes}', dataset_id = '{dataset_id}'",
